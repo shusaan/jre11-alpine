@@ -1,27 +1,16 @@
-FROM azul/zulu-openjdk-alpine:11 as packager
+FROM alpine:latest as packager
 
-RUN { \
-        java --version ; \
-        echo "jlink version:" && \
-        jlink --version ; \
-    }
+RUN apk --no-cache add openjdk11-jdk openjdk11-jmods
 
 ENV JAVA_MINIMAL=/opt/jre
 
-# build modules distribution
-RUN jlink \
+# build minimal JRE
+RUN /usr/lib/jvm/java-11-openjdk/bin/jlink \
     --verbose \
     --add-modules \
         java.base,java.sql,java.naming,java.desktop,java.management,java.security.jgss,java.instrument \
-        # java.naming - javax/naming/NamingException
-        # java.desktop - java/beans/PropertyEditorSupport
-        # java.management - javax/management/MBeanServer
-        # java.security.jgss - org/ietf/jgss/GSSException
-        # java.instrument - java/lang/instrument/IllegalClassFormatException
-    --compress 2 \
-    --strip-debug \
-    --no-header-files \
-    --no-man-pages \
+    --compress 2 --strip-debug --no-header-files --no-man-pages \
+    --release-info="add:IMPLEMENTOR=radistao:IMPLEMENTOR_VERSION=radistao_JRE" \
     --output "$JAVA_MINIMAL"
 
 # Second stage, add only our minimal "JRE" distr and our app
