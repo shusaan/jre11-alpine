@@ -15,10 +15,8 @@ RUN /usr/lib/jvm/java-11-openjdk/bin/jlink \
 
 # Second stage, add only our minimal "JRE" distr and our app
 FROM alpine:3.19.0
-
 ENV JAVA_MINIMAL=/opt/jre
 ENV PATH="$PATH:$JAVA_MINIMAL/bin"
-
 COPY --from=packager "$JAVA_MINIMAL" "$JAVA_MINIMAL"
 # Add app user & Configure working directory
 ARG APPLICATION_USER=appuser
