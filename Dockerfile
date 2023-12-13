@@ -19,10 +19,10 @@ ENV JAVA_MINIMAL=/opt/jre
 ENV PATH="$PATH:$JAVA_MINIMAL/bin"
 COPY --from=packager "$JAVA_MINIMAL" "$JAVA_MINIMAL"
 # Create the app user & Configure working directory
-ARG USERNAME=appuser
+ARG USER_NAME=appuser
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
-RUN addgroup --gid $USER_GID $USERNAME \
-    && adduser -D -S -H -G $USERNAME -u $USER_UID $USERNAME \
+RUN addgroup --gid $USER_GID $USER_NAME \
+    && adduser -D -S -H -G $USER_NAME -u $USER_UID $USER_NAME \
     && mkdir /app && chown -R $USER_UID:$USER_GID /app
 USER $USER_NAME
