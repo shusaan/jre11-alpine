@@ -18,7 +18,11 @@ FROM alpine:3.19.0
 ENV JAVA_MINIMAL=/opt/jre
 ENV PATH="$PATH:$JAVA_MINIMAL/bin"
 COPY --from=packager "$JAVA_MINIMAL" "$JAVA_MINIMAL"
-# Add app user & Configure working directory
-ARG APPLICATION_USER=appuser
-RUN adduser --no-create-home -u 1000 -D $APPLICATION_USER && mkdir /app && chown -R $APPLICATION_USER /app
-USER 1000
+# Create the app user & Configure working directory
+ARG USERNAME=appuser
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --shell /sbin/nologin --disabled-password --uid $USER_UID --gid $USER_GID --no-create-home -m $USERNAME \
+    && mkdir /app && chown -R $USER_UID:$USER_GID /app
+USER $USER_NAME
