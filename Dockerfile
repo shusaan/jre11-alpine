@@ -1,24 +1,34 @@
-FROM alpine:latest as packager
+# base image to build a JRE
+FROM amazoncorretto:17.0.3-alpine as corretto-jdk
 
-RUN apk --no-cache add openjdk11-jdk openjdk11-jmods
+# required for strip-debug to work
+RUN apk add --no-cache binutils
 
-ENV JAVA_MINIMAL="/opt/java-minimal"
-
-# build minimal JRE
-RUN /usr/lib/jvm/java-11-openjdk/bin/jlink \
+# Build small JRE image
+RUN $JAVA_HOME/bin/jlink \
     --verbose \
-    --add-modules \
-        java.base,java.sql,java.naming,java.desktop,java.management,java.security.jgss,java.instrument \
-    --compress 2 --strip-debug --no-header-files --no-man-pages \
-    --release-info="add:IMPLEMENTOR=radistao:IMPLEMENTOR_VERSION=radistao_JRE" \
-    --output "$JAVA_MINIMAL"
+    --add-modules java.base,java.management,java.naming,java.net.http,java.security.jgss,java.security.sasl,java.sql,jdk.httpserver,jdk.unsupported \
+    --strip-debug \
+    --no-man-pages \
+    --no-header-files \
+    --compress=2 \
+    --output /customjre
 
-FROM alpine:3.19.0
+# main app image
+FROM alpine:latest
 ENV JAVA_HOME=/jre
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
-COPY --from=packager "$JAVA_MINIMAL" "$JAVA_HOME"
-# Add app user & Configure working directory
+
+# copy JRE from the base image
+COPY --from=corretto-jdk /customjre $JAVA_HOME
+
+# Add app user
 ARG APPLICATION_USER=appuser
-RUN adduser --no-create-home -u 1000 -D $APPLICATION_USER && mkdir /app && chown -R $APPLICATION_USER /app
+RUN adduser --no-create-home -u 1000 -D $APPLICATION_USER
+
+# Configure working directory
+RUN mkdir /app && \
+    chown -R $APPLICATION_USER /app
+
 USER 1000
 
