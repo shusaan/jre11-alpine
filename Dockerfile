@@ -22,7 +22,7 @@ COPY --from=packager "$JAVA_MINIMAL" "$JAVA_MINIMAL"
 ARG USERNAME=appuser
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --shell /sbin/nologin --disabled-password --uid $USER_UID --gid $USER_GID --no-create-home -m $USERNAME \
+RUN addgroup --gid $USER_GID $USERNAME \
+    && adduser -D -S -H -G $USERNAME -u $USER_UID $USERNAME \
     && mkdir /app && chown -R $USER_UID:$USER_GID /app
 USER $USER_NAME
