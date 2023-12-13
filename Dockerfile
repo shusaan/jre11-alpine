@@ -1,10 +1,13 @@
 FROM azul/zulu-openjdk-alpine:11 as packager
+
 RUN { \
         java --version ; \
         echo "jlink version:" && \
         jlink --version ; \
     }
+
 ENV JAVA_MINIMAL=/opt/jre
+
 # build modules distribution
 RUN jlink \
     --verbose \
@@ -23,10 +26,8 @@ RUN jlink \
 
 # Second stage, add only our minimal "JRE" distr and our app
 FROM alpine:3.19.0
-ENV JAVA_HOME=/jre
-ENV PATH="${JAVA_HOME}/bin:${PATH}"
-COPY --from=packager "$JAVA_MINIMAL" "$JAVA_HOME"
-# Add app user & Configure working directory
-ARG APPLICATION_USER=appuser
-RUN adduser --no-create-home -u 1000 -D $APPLICATION_USER && mkdir /app && chown -R $APPLICATION_USER /app
-USER 1000
+
+ENV JAVA_MINIMAL=/opt/jre
+ENV PATH="$PATH:$JAVA_MINIMAL/bin"
+
+COPY --from=packager "$JAVA_MINIMAL" "$JAVA_MINIMAL"
