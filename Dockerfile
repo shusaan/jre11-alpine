@@ -14,8 +14,11 @@ RUN /usr/lib/jvm/java-11-openjdk/bin/jlink \
     --output "$JAVA_MINIMAL"
 
 FROM alpine:3.19.0
+ENV JAVA_HOME=/jre
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+COPY --from=packager "$JAVA_MINIMAL" "$JAVA_HOME"
+# Add app user & Configure working directory
+ARG APPLICATION_USER=appuser
+RUN adduser --no-create-home -u 1000 -D $APPLICATION_USER && mkdir /app && chown -R $APPLICATION_USER /app
+USER 1000
 
-ENV JAVA_HOME=/opt/java-minimal
-ENV PATH="$PATH:$JAVA_HOME/bin"
-
-COPY --from=packager "$JAVA_HOME" "$JAVA_HOME"
