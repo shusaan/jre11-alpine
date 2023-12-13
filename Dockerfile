@@ -1,34 +1,32 @@
-# base image to build a JRE
-FROM amazoncorretto:17.0.3-alpine as corretto-jdk
-
-# required for strip-debug to work
-RUN apk add --no-cache binutils
-
-# Build small JRE image
-RUN $JAVA_HOME/bin/jlink \
+FROM azul/zulu-openjdk-alpine:11 as packager
+RUN { \
+        java --version ; \
+        echo "jlink version:" && \
+        jlink --version ; \
+    }
+ENV JAVA_MINIMAL=/opt/jre
+# build modules distribution
+RUN jlink \
     --verbose \
-    --add-modules java.base,java.management,java.naming,java.net.http,java.security.jgss,java.security.sasl,java.sql,jdk.httpserver,jdk.unsupported \
+    --add-modules \
+        java.base,java.sql,java.naming,java.desktop,java.management,java.security.jgss,java.instrument \
+        # java.naming - javax/naming/NamingException
+        # java.desktop - java/beans/PropertyEditorSupport
+        # java.management - javax/management/MBeanServer
+        # java.security.jgss - org/ietf/jgss/GSSException
+        # java.instrument - java/lang/instrument/IllegalClassFormatException
+    --compress 2 \
     --strip-debug \
-    --no-man-pages \
     --no-header-files \
-    --compress=2 \
-    --output /customjre
+    --no-man-pages \
+    --output "$JAVA_MINIMAL"
 
-# main app image
-FROM alpine:latest
+# Second stage, add only our minimal "JRE" distr and our app
+FROM alpine:3.19.0
 ENV JAVA_HOME=/jre
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
-
-# copy JRE from the base image
-COPY --from=corretto-jdk /customjre $JAVA_HOME
-
-# Add app user
+COPY --from=packager "$JAVA_MINIMAL" "$JAVA_HOME"
+# Add app user & Configure working directory
 ARG APPLICATION_USER=appuser
-RUN adduser --no-create-home -u 1000 -D $APPLICATION_USER
-
-# Configure working directory
-RUN mkdir /app && \
-    chown -R $APPLICATION_USER /app
-
+RUN adduser --no-create-home -u 1000 -D $APPLICATION_USER && mkdir /app && chown -R $APPLICATION_USER /app
 USER 1000
-
