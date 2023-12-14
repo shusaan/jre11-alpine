@@ -23,6 +23,6 @@ ARG USER_NAME=appuser
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 RUN addgroup --gid $USER_GID $USER_NAME \
-    && adduser -D -S -H -G $USER_NAME -u $USER_UID $USER_NAME \
-    && mkdir /app && chown -R $USER_UID:$USER_GID /app && chmod -R 755 /app/
+    && adduser -D -S -G $USER_NAME -u $USER_UID $USER_NAME \
+    && mkdir /home/$USER_NAME/app && chown -R $USER_UID:$USER_GID /home/$USER_NAME/app && chmod -R 755 /home/$USER_NAME/app
 USER $USER_NAME
