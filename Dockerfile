@@ -1,6 +1,6 @@
 FROM alpine:latest as packager
 
-RUN apk --no-cache add openjdk11-jdk openjdk11-jmods
+RUN apk --no-cache add openjdk11-jdk openjdk11-jmods bash
 
 ENV JAVA_MINIMAL=/opt/jre
 
